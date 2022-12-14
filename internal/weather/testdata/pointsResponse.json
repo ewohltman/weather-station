@@ -10,7 +10,7 @@
     "gridId": "AKQ",
     "gridX": 0,
     "gridY": 0,
-    "forecast": "string",
+    "forecast": "https://api.weather.gov/gridpoints/AKQ/0,0/forecast",
     "forecastHourly": "string",
     "forecastGridData": "string",
     "observationStations": "string",

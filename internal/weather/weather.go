@@ -3,14 +3,16 @@
 package weather
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 )
 
 const (
-	apiURL    = "https://api.weather.gov/points"
-	userAgent = ""
+	apiBaseURL = "https://api.weather.gov"
+	userAgent  = "eric.wohltman@gmail.com"
 )
 
 // HTTPClient is an interface abstraction for HTTP clients.
@@ -18,89 +20,75 @@ type HTTPClient interface {
 	Do(req *http.Request) (*http.Response, error)
 }
 
-// Response is the parsed result from the weather.gov API.
-type Response struct {
-	ID         string      `json:"id,omitempty"`
-	Type       string      `json:"type,omitempty"`
-	Properties *Properties `json:"properties,omitempty"`
-}
-
-// UnmarshalJSON satisfies the json.Unmarshaler interface for *Response.
-func (response *Response) UnmarshalJSON(data []byte) error {
-	tmp := &struct {
-		ID         string         `json:"id,omitempty"`
-		Type       string         `json:"type,omitempty"`
-		Properties *Properties    `json:"properties,omitempty"`
-		Error      *ResponseError `json:",inline"`
-	}{}
-
-	err := json.Unmarshal(data, tmp)
-	if err != nil {
-		return err
-	}
-
-	if tmp.Error != nil {
-		return tmp.Error
-	}
-
-	response.ID = tmp.ID
-	response.Type = tmp.Type
-	response.Properties = tmp.Properties
-
-	return nil
-}
-
-// Properties contains the data from a weather.gov API response.
-type Properties struct {
-	Geometry            string `json:"geometry,omitempty"`
-	ID                  string `json:"@id,omitempty"`
-	Type                string `json:"@type,omitempty"`
-	Cwa                 string `json:"cwa,omitempty"`
-	ForecastOffice      string `json:"forecastOffice,omitempty"`
-	GridID              string `json:"gridId,omitempty"`
-	GridX               int    `json:"gridX,omitempty"`
-	GridY               int    `json:"gridY,omitempty"`
-	Forecast            string `json:"forecast,omitempty"`
-	ForecastHourly      string `json:"forecastHourly,omitempty"`
-	ForecastGridData    string `json:"forecastGridData,omitempty"`
-	ObservationStations string `json:"observationStations,omitempty"`
-	ForecastZone        string `json:"forecastZone,omitempty"`
-	County              string `json:"county,omitempty"`
-	FireWeatherZone     string `json:"fireWeatherZone,omitempty"`
-	TimeZone            string `json:"timeZone,omitempty"`
-	RadarStation        string `json:"radarStation,omitempty"`
-}
-
-// ResponseError is the parsed error result from the weather.gov API.
-type ResponseError struct {
-	Type          string `json:"type,omitempty"`
-	Title         string `json:"title,omitempty"`
-	Status        int    `json:"status,omitempty"`
-	Detail        string `json:"detail,omitempty"`
-	Instance      string `json:"instance,omitempty"`
-	CorrelationID string `json:"correlationId,omitempty"`
-}
-
-// Error satisfies the error interface for *ResponseError.
-func (err *ResponseError) Error() string {
-	return fmt.Sprintf("[%d]: %s: %s", err.Status, err.Title, err.Detail)
-}
-
 // APIClient is a client for making weather.gov API requests.
 type APIClient struct {
-	httpClient HTTPClient
-	zipCode    string
+	httpClient  HTTPClient
+	forecastURL string
 }
 
 // NewAPIClient returns a new *APIClient.
-func NewAPIClient(httpClient HTTPClient, zipCode string) *APIClient {
-	return &APIClient{
-		httpClient: httpClient,
-		zipCode:    zipCode,
+func NewAPIClient(ctx context.Context, httpClient HTTPClient, lat, long string) (*APIClient, error) {
+	pointsURL := fmt.Sprintf("%s/points/%s,%s", apiBaseURL, lat, long)
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, pointsURL, http.NoBody)
+	if err != nil {
+		return nil, err
 	}
+
+	req.Header.Add("User-Agent", userAgent)
+
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+
+	defer func() { _ = resp.Body.Close() }()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	pointsResponse := &PointsResponse{}
+
+	err = json.Unmarshal(body, pointsResponse)
+	if err != nil {
+		return nil, err
+	}
+
+	return &APIClient{
+		httpClient:  httpClient,
+		forecastURL: pointsResponse.Properties.Forecast,
+	}, nil
 }
 
-// Query returns the response from a weather.gov API request.
-func (apiClient *APIClient) Query() (*Response, error) {
-	return nil, nil
+// QueryForecast returns the response from a weather.gov API request.
+func (apiClient *APIClient) QueryForecast(ctx context.Context) (*GridPointsResponse, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, apiClient.forecastURL, http.NoBody)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("User-Agent", userAgent)
+
+	resp, err := apiClient.httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+
+	defer func() { _ = resp.Body.Close() }()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	gridPointsResponse := &GridPointsResponse{}
+
+	err = json.Unmarshal(body, gridPointsResponse)
+	if err != nil {
+		return nil, err
+	}
+
+	return gridPointsResponse, nil
 }

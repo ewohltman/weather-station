@@ -1,0 +1,31 @@
+{
+  "id": "string",
+  "type": "Feature",
+  "properties": {
+    "geometry": "string",
+    "units": "us",
+    "forecastGenerator": "string",
+    "generatedAt": "2022-12-14T20:55:16.840Z",
+    "updateTime": "2022-12-14T20:55:16.840Z",
+    "elevation": {
+      "value": 0,
+      "maxValue": 0,
+      "minValue": 0,
+      "unitCode": "string",
+      "qualityControl": "Z"
+    },
+    "periods": [
+      {
+        "number": 0,
+        "name": "Tuesday Night",
+        "startTime": "2022-12-14T20:55:16.840Z",
+        "endTime": "2022-12-14T20:55:16.840Z",
+        "isDaytime": true,
+        "temperatureTrend": "rising",
+        "windDirection": "N",
+        "shortForecast": "string",
+        "detailedForecast": "string"
+      }
+    ]
+  }
+}
