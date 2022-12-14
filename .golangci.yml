@@ -43,6 +43,7 @@ linters:
   enable-all: true
   disable:
     - contextcheck
+    - deadcode
     - exhaustivestruct
     - exhaustruct
     - gci
@@ -60,6 +61,7 @@ linters:
     - sqlclosecheck
     - structcheck
     - tagliatelle
+    - varcheck
     - varnamelen
     - wastedassign
     - wrapcheck
