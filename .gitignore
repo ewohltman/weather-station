@@ -17,5 +17,6 @@
 # Dependency directories (remove the comment below to include it)
 vendor/
 
-# Project binary
+# Project binaries
 build/package/weather-station/weather-station.wasm
+build/package/weather-station/weather-station-webserver

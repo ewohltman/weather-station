@@ -27,4 +27,8 @@ test-report:
 	@echo "all tests passed"
 
 build:
+	CGO_ENABLED=0 go build -o build/package/${project}/${project}-webserver cmd/${project}-webserver/${project}-webserver.go
 	CGO_ENABLED=0 GOOS=js GOARCH=wasm go build -o build/package/${project}/${project}.wasm cmd/${project}/${project}.go
+
+run: build
+	cd build/package/weather-station && ./weather-station-webserver
