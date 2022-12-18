@@ -72,7 +72,7 @@ run:
     - .github
     - .idea
     - build
-    - web
+    - weather-station-webserver/web
 
 issues:
   max-same-issues: 0

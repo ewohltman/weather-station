@@ -27,8 +27,9 @@ test-report:
 	@echo "all tests passed"
 
 build:
-	CGO_ENABLED=0 go build -o build/package/${project}/${project}-webserver cmd/${project}-webserver/${project}-webserver.go
-	CGO_ENABLED=0 GOOS=js GOARCH=wasm go build -o build/package/${project}/${project}.wasm cmd/${project}/${project}.go
+	CGO_ENABLED=0 GOOS=js GOARCH=wasm go build -o cmd/${project}-webserver/web/app/${project}.wasm cmd/${project}/${project}.go
+	CGO_ENABLED=0 go build -o build/package/${project}-webserver/${project}-webserver cmd/${project}-webserver/${project}-webserver.go
 
 run: build
-	cd build/package/weather-station && ./weather-station-webserver
+	-/usr/bin/google-chrome-stable --chrome --kiosk http://localhost:8080 > /dev/null 2>&1
+	cd build/package/weather-station-webserver && ./weather-station-webserver

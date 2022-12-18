@@ -28,32 +28,23 @@ Add the following polyfill for Microsoft Edge 17/18 support:
     }
 
     const go = new Go();
-    let mod, inst;
     WebAssembly.instantiateStreaming(fetch("weather-station.wasm"), go.importObject).then((result) => {
-        mod = result.module;
-        inst = result.instance;
+        go.run(result.instance)
     }).catch((err) => {
         console.error(err);
     });
-
-    /*async function run() {
-        console.clear();
-        await go.run(inst);
-        inst = await WebAssembly.instantiate(mod, go.importObject); // reset instance
-    }*/
-
-    window.onload = function() {
-        inst.then(function(instance) {
-            go.run(instance);
-        });
-    };
 </script>
 
-<button id="addButton">Add</button>
+<div id="updated">&nbsp;</div>
 
-<div>
-    <textarea id="output" name="output" rows="4" cols="50"></textarea>
+<div class="divTable" id="table">
+    <div class="divTableBody">{{range .Rows}}
+        <div class="divTableRow">{{range .Columns}}
+            <div class="divTableCell" id="{{.ID}}">&nbsp;</div>{{end}}
+        </div>{{end}}
+    </div>
 </div>
+<!-- DivTable.com -->
 
 </body>
 
