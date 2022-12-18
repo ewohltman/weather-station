@@ -1,3 +1,6 @@
+# IDA metadata
+.idea/
+
 # Binaries for programs and plugins
 *.exe
 *.exe~
@@ -12,4 +15,8 @@
 *.out
 
 # Dependency directories (remove the comment below to include it)
-# vendor/
+vendor/
+
+# Project binaries
+build/package/weather-station-webserver/weather-station-webserver
+cmd/weather-station-webserver/web/app/weather-station.wasm

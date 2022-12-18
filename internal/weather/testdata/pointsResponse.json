@@ -1,0 +1,23 @@
+{
+  "id": "string",
+  "type": "Feature",
+  "properties": {
+    "geometry": "string",
+    "@id": "string",
+    "@type": "wx:Point",
+    "cwa": "AKQ",
+    "forecastOffice": "string",
+    "gridId": "AKQ",
+    "gridX": 0,
+    "gridY": 0,
+    "forecast": "https://api.weather.gov/gridpoints/AKQ/0,0/forecast",
+    "forecastHourly": "string",
+    "forecastGridData": "string",
+    "observationStations": "string",
+    "forecastZone": "string",
+    "county": "string",
+    "fireWeatherZone": "string",
+    "timeZone": "string",
+    "radarStation": "string"
+  }
+}
