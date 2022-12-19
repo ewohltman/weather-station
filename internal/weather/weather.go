@@ -22,8 +22,9 @@ type HTTPClient interface {
 
 // APIClient is a client for making weather.gov API requests.
 type APIClient struct {
-	httpClient  HTTPClient
-	forecastURL string
+	httpClient        HTTPClient
+	forecastURL       string
+	forecastHourlyURL string
 }
 
 // NewAPIClient returns a new *APIClient.
@@ -57,14 +58,17 @@ func NewAPIClient(ctx context.Context, httpClient HTTPClient, lat, long string) 
 	}
 
 	return &APIClient{
-		httpClient:  httpClient,
-		forecastURL: pointsResponse.Properties.Forecast,
+		httpClient:        httpClient,
+		forecastURL:       pointsResponse.Properties.Forecast,
+		forecastHourlyURL: pointsResponse.Properties.ForecastHourly,
 	}, nil
 }
 
 // QueryForecast returns the response from a weather.gov API request.
 func (apiClient *APIClient) QueryForecast(ctx context.Context) (*GridPointsResponse, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, apiClient.forecastURL, http.NoBody)
+	// TODO: Break this into forecast and forecast hourly.
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, apiClient.forecastHourlyURL, http.NoBody)
 	if err != nil {
 		return nil, err
 	}

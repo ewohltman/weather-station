@@ -9,14 +9,13 @@ import (
 	"github.com/ewohltman/weather-station/internal/weather"
 	"log"
 	"net/http"
-	"strconv"
 	"syscall/js"
 	"time"
 )
 
 const (
-	lat  = "40.738620"
-	long = "-74.064810"
+	lat  = "40.7386"
+	long = "-74.0648"
 )
 
 const refreshPeriod = time.Minute
@@ -32,7 +31,7 @@ const (
 	nbsp           = "&nbsp;"
 )
 
-const htmlTagFmtImg = `<img src="%s" alt="%s" width="86" height="86">`
+const htmlTagFmtImg = `<span><img src="%s" alt="%s" width="86" height="86"></span>`
 
 func populate(ctx context.Context, apiClient *weather.APIClient, document js.Value) {
 	ticker := time.NewTicker(refreshPeriod)
@@ -57,12 +56,13 @@ func populate(ctx context.Context, apiClient *weather.APIClient, document js.Val
 		for i := 0; i < tableRows; i++ {
 			period := forecast.Properties.Periods[i]
 			rowData := []string{
-				period.Name,
+				// period.Name,
+				mustParseTime(time.Parse(time.RFC3339, period.StartTime)).Format(time.Kitchen),
 				fmt.Sprintf(htmlTagFmtImg,
 					period.Icon,
 					"Weather icon",
 				),
-				strconv.Itoa(period.Temperature),
+				fmt.Sprintf("%d F", period.Temperature),
 				period.ShortForecast,
 			}
 
@@ -77,6 +77,14 @@ func populate(ctx context.Context, apiClient *weather.APIClient, document js.Val
 
 		<-ticker.C
 	}
+}
+
+func mustParseTime(t time.Time, err error) time.Time {
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return t
 }
 
 func main() {
