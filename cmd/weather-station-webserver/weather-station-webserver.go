@@ -38,6 +38,11 @@ type Column struct {
 func runServer(bufIndex *bytes.Buffer) {
 	index := bufIndex.Bytes()
 
+	favicon, err := web.ReadFile("web/static/favicon.ico")
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	css, err := web.ReadFile("web/static/weather-station.css")
 	if err != nil {
 		log.Fatal(err)
@@ -54,7 +59,12 @@ func runServer(bufIndex *bytes.Buffer) {
 	}
 
 	http.HandleFunc("/favicon.ico", func(w http.ResponseWriter, r *http.Request) {
-		http.NotFound(w, r)
+		w.Header().Set("Content-Type", "image/png")
+
+		_, err = w.Write(favicon)
+		if err != nil {
+			log.Fatal(err)
+		}
 	})
 
 	http.HandleFunc("/weather-station.css", func(w http.ResponseWriter, r *http.Request) {
