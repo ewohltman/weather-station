@@ -6,11 +6,14 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/ewohltman/weather-station/internal/weather"
 	"log"
 	"net/http"
+	"strings"
 	"syscall/js"
 	"time"
+
+	"github.com/ewohltman/weather-station/internal/format"
+	"github.com/ewohltman/weather-station/internal/weather"
 )
 
 const (
@@ -21,62 +24,116 @@ const (
 const refreshPeriod = time.Minute
 
 const (
-	tableRows    = 14
-	tableColumns = 4
+	getElementById = "getElementById"
+	innerHTML      = "innerHTML"
 )
 
 const (
-	getElementById = "getElementById"
-	innerHTML      = "innerHTML"
-	nbsp           = "&nbsp;"
+	htmlTagFmtImg = `<span><img src="%s" alt="Weather icon" width="86" height="86"></span>`
+	cellFmt       = "table%d_%d"
 )
 
-const htmlTagFmtImg = `<span><img src="%s" alt="%s" width="86" height="86"></span>`
-
-func populate(ctx context.Context, apiClient *weather.APIClient, document js.Value) {
+func run(ctx context.Context, apiClient *weather.APIClient, document js.Value) {
 	ticker := time.NewTicker(refreshPeriod)
 	defer ticker.Stop()
 
 	for {
-		document.Call(getElementById, "updated").Set(innerHTML, time.Now().String())
-
-		for i := 0; i < tableRows; i++ {
+		/*for i := 0; i < tableRows; i++ {
 			for j := 0; j < tableColumns; j++ {
-				tableElement := fmt.Sprintf("table%d_%d", i, j)
-
-				document.Call(getElementById, tableElement).Set(innerHTML, nbsp)
+				document.Call(getElementById, cell(i, j)).Set(innerHTML, nbsp)
 			}
-		}
+		}*/
 
-		forecast, err := apiClient.QueryForecast(ctx)
+		hourlyForecast, err := apiClient.QueryForecast(ctx)
 		if err != nil {
-			log.Fatalf("Error querying forecast: %s", err)
+			log.Printf("Error querying hourly forecast: %s", err)
+
+			<-ticker.C
+
+			continue
 		}
 
-		for i := 0; i < tableRows; i++ {
-			period := forecast.Properties.Periods[i]
-			rowData := []string{
-				// period.Name,
-				mustParseTime(time.Parse(time.RFC3339, period.StartTime)).Format(time.Kitchen),
-				fmt.Sprintf(htmlTagFmtImg,
-					period.Icon,
-					"Weather icon",
-				),
-				fmt.Sprintf("%d F", period.Temperature),
-				period.ShortForecast,
-			}
+		updateNow(document, hourlyForecast)
 
-			fmt.Println(fmt.Sprintf(htmlTagFmtImg, period.Icon, "Weather icon"))
+		err = updateToday(document, hourlyForecast)
+		if err != nil {
+			log.Printf("Error querying hourly forecast: %s", err)
 
-			for j := 0; j < tableColumns; j++ {
-				tableElement := fmt.Sprintf("table%d_%d", i, j)
+			<-ticker.C
 
-				document.Call(getElementById, tableElement).Set(innerHTML, rowData[j])
-			}
+			continue
 		}
+
+		updateFiveDay()
 
 		<-ticker.C
 	}
+}
+
+func updateNow(document js.Value, hourlyForecast *weather.GridPointsResponse) {
+	period := hourlyForecast.Properties.Periods[0]
+	data := []string{
+		fmt.Sprintf(htmlTagFmtImg, period.Icon),
+		mustParseTime(time.Parse(time.RFC3339, period.StartTime)).Format(time.Kitchen),
+		fmt.Sprintf("Temperature: %d F", period.Temperature),
+		fmt.Sprintf("Wind: %s %s", period.WindSpeed, period.WindDirection),
+		fmt.Sprintf("Forecast: %s", period.ShortForecast),
+	}
+
+	formatted := strings.Join(data, " <br>\n")
+
+	document.Call(getElementById, "nowCard").Set(innerHTML, formatted)
+}
+
+func updateToday(document js.Value, hourlyForecast *weather.GridPointsResponse) error {
+	const (
+		card    = "todayCard"
+		rows    = 5
+		columns = 5
+	)
+
+	table, err := format.ExecuteTemplate(card, rows, columns)
+	if err != nil {
+		return fmt.Errorf("error creating today table: %w", err)
+	}
+
+	document.Call(getElementById, "todayCard").Set(innerHTML, table.String())
+
+	/*for i := 0; i < rows; i++ {
+		period := hourlyForecast.Properties.Periods[i*4]
+		data := []string{
+			fmt.Sprintf(htmlTagFmtImg, period.Icon),
+			mustParseTime(time.Parse(time.RFC3339, period.StartTime)).Format(time.Kitchen),
+			fmt.Sprintf("Temperature: %d F", period.Temperature),
+			fmt.Sprintf("Wind: %s %s", period.WindSpeed, period.WindDirection),
+			fmt.Sprintf("Forecast: %s", period.ShortForecast),
+		}
+
+		for j := 0; j < columns; j++ {
+			document.Call(getElementById, format.CellID(card, i, j)).Set(innerHTML, data[j])
+		}
+	}*/
+
+	for i := 0; i < rows; i++ {
+		period := hourlyForecast.Properties.Periods[i*4]
+		data := []string{
+			fmt.Sprintf(htmlTagFmtImg, period.Icon),
+			mustParseTime(time.Parse(time.RFC3339, period.StartTime)).Format(time.Kitchen),
+			fmt.Sprintf("Temperature: %d F", period.Temperature),
+			fmt.Sprintf("Wind: %s %s", period.WindSpeed, period.WindDirection),
+			fmt.Sprintf("Forecast: %s", period.ShortForecast),
+		}
+
+		for j := 0; j < columns; j++ {
+			document.Call(getElementById, format.CellID(card, j, i)).Set(innerHTML, data[j])
+		}
+	}
+
+	return nil
+}
+
+func updateFiveDay() {
+
 }
 
 func mustParseTime(t time.Time, err error) time.Time {
@@ -97,7 +154,5 @@ func main() {
 		log.Fatalf("Error creating new API client: %s", err)
 	}
 
-	populate(ctx, apiClient, document)
-
-	<-ctx.Done()
+	run(ctx, apiClient, document)
 }

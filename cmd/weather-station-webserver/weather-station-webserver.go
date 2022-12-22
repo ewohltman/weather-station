@@ -2,17 +2,9 @@
 package main
 
 import (
-	"bytes"
 	"embed"
-	"fmt"
-	"html/template"
 	"log"
 	"net/http"
-)
-
-const (
-	tableRows    = 14
-	tableColumns = 4
 )
 
 var (
@@ -20,30 +12,13 @@ var (
 	web embed.FS
 )
 
-// Table is used in an HTML template.
-type Table struct {
-	Rows []Row
-}
-
-// Row is a dimension of a Table.
-type Row struct {
-	Columns []Column
-}
-
-// Column is a dimension of a Table.
-type Column struct {
-	ID string
-}
-
-func runServer(bufIndex *bytes.Buffer) {
-	index := bufIndex.Bytes()
-
-	favicon, err := web.ReadFile("web/static/favicon.ico")
+func runServer() {
+	index, err := web.ReadFile("web/static/index.html")
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	css, err := web.ReadFile("web/static/weather-station.css")
+	css, err := web.ReadFile("web/static/material-dark.css")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -58,16 +33,12 @@ func runServer(bufIndex *bytes.Buffer) {
 		log.Fatal(err)
 	}
 
-	http.HandleFunc("/favicon.ico", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "image/png")
+	favicon, err := web.ReadFile("web/static/favicon.ico")
+	if err != nil {
+		log.Fatal(err)
+	}
 
-		_, err = w.Write(favicon)
-		if err != nil {
-			log.Fatal(err)
-		}
-	})
-
-	http.HandleFunc("/weather-station.css", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/material-dark.css", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/css")
 
 		_, err = w.Write(css)
@@ -94,6 +65,15 @@ func runServer(bufIndex *bytes.Buffer) {
 		}
 	})
 
+	http.HandleFunc("/favicon.ico", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "image/png")
+
+		_, err = w.Write(favicon)
+		if err != nil {
+			log.Fatal(err)
+		}
+	})
+
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html")
 
@@ -110,26 +90,5 @@ func runServer(bufIndex *bytes.Buffer) {
 }
 
 func main() {
-	index := &bytes.Buffer{}
-	table := Table{Rows: make([]Row, tableRows)}
-
-	for i := 0; i < tableRows; i++ {
-		table.Rows[i].Columns = make([]Column, tableColumns)
-
-		for j := 0; j < tableColumns; j++ {
-			table.Rows[i].Columns[j].ID = fmt.Sprintf("table%d_%d", i, j)
-		}
-	}
-
-	tmpl, err := template.ParseFS(web, "web/templates/index.html")
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	err = tmpl.Execute(index, table)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	runServer(index)
+	runServer()
 }
