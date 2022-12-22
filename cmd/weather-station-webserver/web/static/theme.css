@@ -1,0 +1,21 @@
+body {
+    background-color: #263238;
+}
+
+text {
+    color: #FFFFFF;
+}
+
+.btn-primary {
+    color: #FFFFFF;
+    background-color: #82aaff;
+}
+
+.card, .card-body {
+    color: #1E272C;
+    background-color: #B0BEC5;
+}
+
+.fixed-table {
+    table-layout: fixed;
+}

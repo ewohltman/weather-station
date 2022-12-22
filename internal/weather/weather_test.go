@@ -81,7 +81,7 @@ func TestAPIClient_QueryForecast(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			_, err = apiClient.QueryForecast(ctx)
+			_, err = apiClient.QueryHourlyForecast(ctx)
 			if (err != nil) != tc.expectedError {
 				t.Error("unexpected result")
 			}

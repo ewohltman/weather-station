@@ -18,5 +18,7 @@
 vendor/
 
 # Project binaries
-build/package/weather-station-webserver/weather-station-webserver
 cmd/weather-station-webserver/web/app/weather-station.wasm
+build/package/weather-station-webserver/weather-station-webserver.arm
+build/package/weather-station-webserver/weather-station-webserver.amd64
+
