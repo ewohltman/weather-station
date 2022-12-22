@@ -15,3 +15,7 @@ text {
     color: #1E272C;
     background-color: #B0BEC5;
 }
+
+.fixed-table {
+    table-layout: fixed;
+}

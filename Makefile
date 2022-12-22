@@ -28,8 +28,9 @@ test-report:
 
 build:
 	CGO_ENABLED=0 GOOS=js GOARCH=wasm go build -o cmd/${project}-webserver/web/app/${project}.wasm cmd/${project}/${project}.go
-	CGO_ENABLED=0 go build -o build/package/${project}-webserver/${project}-webserver cmd/${project}-webserver/${project}-webserver.go
+	CGO_ENABLED=0 GOOS=linux GOARCH=arm go build -o build/package/${project}-webserver/${project}-webserver.arm cmd/${project}-webserver/${project}-webserver.go
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o build/package/${project}-webserver/${project}-webserver.amd64 cmd/${project}-webserver/${project}-webserver.go
 
 run: build
 	-/usr/bin/google-chrome-stable --chrome --kiosk http://localhost:8080 > /dev/null 2>&1
-	cd build/package/weather-station-webserver && ./weather-station-webserver
+	cd build/package/weather-station-webserver && ./weather-station-webserver.amd64

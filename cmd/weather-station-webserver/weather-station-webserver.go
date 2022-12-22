@@ -18,7 +18,7 @@ func runServer() {
 		log.Fatal(err)
 	}
 
-	css, err := web.ReadFile("web/static/material-dark.css")
+	css, err := web.ReadFile("web/static/theme.css")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -38,7 +38,7 @@ func runServer() {
 		log.Fatal(err)
 	}
 
-	http.HandleFunc("/material-dark.css", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/theme.css", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/css")
 
 		_, err = w.Write(css)

@@ -8,7 +8,7 @@ import (
 
 const (
 	tableFmt = `
-<table class="table">
+<table class="table fixed-table">
   <tbody class="align-middle">{{range .Rows}}
     <tr>{{range .Columns}}
       <td id="{{.ID}}"></td>{{end}}
