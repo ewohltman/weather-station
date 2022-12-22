@@ -23,7 +23,7 @@ type HTTPClient interface {
 // APIClient is a client for making weather.gov API requests.
 type APIClient struct {
 	httpClient        HTTPClient
-	forecastURL       string
+	forecastDailyURL  string
 	forecastHourlyURL string
 }
 
@@ -59,16 +59,44 @@ func NewAPIClient(ctx context.Context, httpClient HTTPClient, lat, long string) 
 
 	return &APIClient{
 		httpClient:        httpClient,
-		forecastURL:       pointsResponse.Properties.Forecast,
+		forecastDailyURL:  pointsResponse.Properties.Forecast,
 		forecastHourlyURL: pointsResponse.Properties.ForecastHourly,
 	}, nil
 }
 
-// QueryForecast returns the response from a weather.gov API request.
-func (apiClient *APIClient) QueryForecast(ctx context.Context) (*GridPointsResponse, error) {
-	// TODO: Break this into forecast and forecast hourly.
-
+// QueryHourlyForecast returns the response from a weather.gov API request.
+func (apiClient *APIClient) QueryHourlyForecast(ctx context.Context) (*GridPointsResponse, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, apiClient.forecastHourlyURL, http.NoBody)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("User-Agent", userAgent)
+
+	resp, err := apiClient.httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+
+	defer func() { _ = resp.Body.Close() }()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	gridPointsResponse := &GridPointsResponse{}
+
+	err = json.Unmarshal(body, gridPointsResponse)
+	if err != nil {
+		return nil, err
+	}
+
+	return gridPointsResponse, nil
+}
+
+func (apiClient *APIClient) QueryDailyForecast(ctx context.Context) (*GridPointsResponse, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, apiClient.forecastDailyURL, http.NoBody)
 	if err != nil {
 		return nil, err
 	}
