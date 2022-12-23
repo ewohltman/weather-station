@@ -29,36 +29,57 @@
         console.error(err);
     });
 </script>
+<script>document.documentElement.webkitRequestFullscreen();</script>
+<script>
+    function fullscreen() {
+        if (document.documentElement.webkitRequestFullscreen) {
+            document.documentElement.webkitRequestFullscreen();
+        }
+        if (document.webkitExitFullscreen) {
+            document.webkitExitFullscreen();
+        }
+    }
+</script>
 
-<!--<div class="container">
-
-</div>-->
-
-<div class="container" id="display">
-    <button class="btn btn-primary btn-lg" type="button" data-bs-toggle="collapse" data-bs-target="#now"
-            aria-expanded="false"
-            aria-controls="now">
-        Now
-    </button>
-    <button class="btn btn-primary btn-lg" type="button" data-bs-toggle="collapse" data-bs-target="#today"
-            aria-expanded="false"
-            aria-controls="today">
-        Today
-    </button>
-    <button class="btn btn-primary btn-lg" type="button" data-bs-toggle="collapse" data-bs-target="#fiveDay"
-            aria-expanded="false"
-            aria-controls="fiveDay">
-        5 Day
-    </button>
-
-    <div class="collapse in" data-bs-parent="#display" id="now">
-        <div class="card card-body align-items-center" id="nowCard"></div>
+<div class="container h-100 d-flex flex-column" id="display">
+    <div class="d-flex">
+        <div class="flex-fill">
+            <button class="btn btn-primary btn-lg" type="button" data-bs-toggle="collapse" data-bs-target="#now"
+                    aria-expanded="true"
+                    aria-controls="now">
+                Now
+            </button>
+            <button class="btn btn-primary btn-lg" type="button" data-bs-toggle="collapse" data-bs-target="#today"
+                    aria-expanded="false"
+                    aria-controls="today">
+                Today
+            </button>
+            <button class="btn btn-primary btn-lg" type="button" data-bs-toggle="collapse" data-bs-target="#fiveDay"
+                    aria-expanded="false"
+                    aria-controls="fiveDay">
+                5 Day
+            </button>
+        </div>
+        <div class="flex-fill d-flex align-items-center justify-content-center">
+            <h1 id="timestamp"></h1>
+        </div>
+        <div class="flex-fill d-flex align-items-center justify-content-end">
+            <button class="btn btn-primary btn-lg" type="button" onclick="fullscreen();">
+                Ƒ
+            </button>
+        </div>
     </div>
-    <div class="collapse" data-bs-parent="#display" id="today">
-        <div class="card card-body align-items-center" id="todayCard"></div>
-    </div>
-    <div class="collapse" data-bs-parent="#display" id="fiveDay">
-        <div class="card card-body align-items-center" id="fiveDayCard"></div>
+
+    <div class="container h-100 fs-4">
+        <div class="collapse show" data-bs-parent="#display" id="now">
+            <div class="card card-body align-items-center text-center" id="nowCard"></div>
+        </div>
+        <div class="collapse" data-bs-parent="#display" id="today">
+            <div class="card card-body align-items-center text-center" id="todayCard"></div>
+        </div>
+        <div class="collapse" data-bs-parent="#display" id="fiveDay">
+            <div class="card card-body align-items-center text-center" id="fiveDayCard"></div>
+        </div>
     </div>
 </div>
 </body>
