@@ -29,8 +29,7 @@ const (
 )
 
 const (
-	htmlTagFmtImg = `<span><img src="%s" alt="Weather icon" width="86" height="86"></span>`
-	cellFmt       = "table%d_%d"
+	htmlTagFmtImg = `<img src="%s" alt="Weather icon" width="86" height="86">`
 )
 
 func run(ctx context.Context, apiClient *weather.APIClient, document js.Value) {
@@ -38,11 +37,7 @@ func run(ctx context.Context, apiClient *weather.APIClient, document js.Value) {
 	defer ticker.Stop()
 
 	for {
-		/*for i := 0; i < tableRows; i++ {
-			for j := 0; j < tableColumns; j++ {
-				document.Call(getElementById, cell(i, j)).Set(innerHTML, nbsp)
-			}
-		}*/
+		document.Call(getElementById, "timestamp").Set(innerHTML, time.Now().Format(time.Kitchen))
 
 		hourlyForecast, err := apiClient.QueryHourlyForecast(ctx)
 		if err != nil {
@@ -66,20 +61,12 @@ func run(ctx context.Context, apiClient *weather.APIClient, document js.Value) {
 
 		err = updateToday(document, hourlyForecast)
 		if err != nil {
-			log.Printf("Error querying hourly forecast: %s", err)
-
-			<-ticker.C
-
-			continue
+			log.Printf("Error updating today card: %s", err)
 		}
 
 		err = updateFiveDay(document, dailyForecast)
 		if err != nil {
-			log.Printf("Error querying daily forecast: %s", err)
-
-			<-ticker.C
-
-			continue
+			log.Printf("Error updating five day card: %s", err)
 		}
 
 		<-ticker.C
@@ -89,14 +76,15 @@ func run(ctx context.Context, apiClient *weather.APIClient, document js.Value) {
 func updateNow(document js.Value, hourlyForecast *weather.GridPointsResponse) {
 	period := hourlyForecast.Properties.Periods[0]
 	data := []string{
-		fmt.Sprintf(htmlTagFmtImg, period.Icon),
-		mustParseTime(time.Parse(time.RFC3339, period.StartTime)).Format(time.Kitchen),
-		fmt.Sprintf("Temperature: %d F", period.Temperature),
-		fmt.Sprintf("Wind: %s %s", period.WindSpeed, period.WindDirection),
-		fmt.Sprintf("Forecast: %s", period.ShortForecast),
+		fmt.Sprintf("%d F", period.Temperature),
+		fmt.Sprintf("Wind %s %s", period.WindSpeed, period.WindDirection),
+		fmt.Sprintf("%s", period.ShortForecast),
 	}
 
-	formatted := strings.Join(data, " <br>\n")
+	formatted := fmt.Sprintf("%s\n%s",
+		fmt.Sprintf(htmlTagFmtImg, period.Icon),
+		strings.Join(data, " <br>\n"),
+	)
 
 	document.Call(getElementById, "nowCard").Set(innerHTML, formatted)
 }
@@ -104,7 +92,7 @@ func updateNow(document js.Value, hourlyForecast *weather.GridPointsResponse) {
 func updateToday(document js.Value, hourlyForecast *weather.GridPointsResponse) error {
 	const (
 		card    = "todayCard"
-		rows    = 5
+		rows    = 3
 		columns = 5
 	)
 
@@ -115,18 +103,17 @@ func updateToday(document js.Value, hourlyForecast *weather.GridPointsResponse) 
 
 	document.Call(getElementById, card).Set(innerHTML, table.String())
 
-	for i := 0; i < rows; i++ {
-		period := hourlyForecast.Properties.Periods[i*4]
+	for c := 0; c < columns; c++ {
+		period := hourlyForecast.Properties.Periods[c*4]
 		data := []string{
 			fmt.Sprintf(htmlTagFmtImg, period.Icon),
 			mustParseTime(time.Parse(time.RFC3339, period.StartTime)).Format(time.Kitchen),
-			fmt.Sprintf("Temperature: %d F", period.Temperature),
-			fmt.Sprintf("Wind: %s %s", period.WindSpeed, period.WindDirection),
-			fmt.Sprintf("Forecast: %s", period.ShortForecast),
+			fmt.Sprintf("%d F", period.Temperature),
+			fmt.Sprintf("%s", period.ShortForecast),
 		}
 
-		for j := 0; j < columns; j++ {
-			document.Call(getElementById, format.CellID(card, j, i)).Set(innerHTML, data[j])
+		for r := 0; r < rows; r++ {
+			document.Call(getElementById, format.CellID(card, r, c)).Set(innerHTML, data[r])
 		}
 	}
 
@@ -136,7 +123,7 @@ func updateToday(document js.Value, hourlyForecast *weather.GridPointsResponse) 
 func updateFiveDay(document js.Value, dailyForecast *weather.GridPointsResponse) error {
 	const (
 		card    = "fiveDayCard"
-		rows    = 5
+		rows    = 3
 		columns = 5
 	)
 
@@ -147,18 +134,16 @@ func updateFiveDay(document js.Value, dailyForecast *weather.GridPointsResponse)
 
 	document.Call(getElementById, card).Set(innerHTML, table.String())
 
-	for i := 0; i < rows; i++ {
-		period := dailyForecast.Properties.Periods[i*2]
+	for c := 0; c < columns; c++ {
+		period := dailyForecast.Properties.Periods[c*2]
 		data := []string{
 			fmt.Sprintf(htmlTagFmtImg, period.Icon),
 			period.Name,
-			fmt.Sprintf("Temperature: %d F", period.Temperature),
-			fmt.Sprintf("Wind: %s %s", period.WindSpeed, period.WindDirection),
-			fmt.Sprintf("Forecast: %s", period.ShortForecast),
+			fmt.Sprintf("%d F", period.Temperature),
 		}
 
-		for j := 0; j < columns; j++ {
-			document.Call(getElementById, format.CellID(card, j, i)).Set(innerHTML, data[j])
+		for r := 0; r < rows; r++ {
+			document.Call(getElementById, format.CellID(card, r, c)).Set(innerHTML, data[r])
 		}
 	}
 

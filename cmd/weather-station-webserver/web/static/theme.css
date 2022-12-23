@@ -1,14 +1,28 @@
+html {
+    margin: 0;
+    height: 100%;
+}
+
 body {
+    margin: 0;
+    height: 100%;
     background-color: #263238;
 }
 
-text {
+text, h1 {
     color: #FFFFFF;
 }
 
 .btn-primary {
     color: #FFFFFF;
     background-color: #82aaff;
+}
+
+.btn-lg {
+    --bs-btn-padding-y: 0.75rem;
+    --bs-btn-padding-x: 1.5rem;
+    --bs-btn-font-size: 1.875rem;
+    --bs-btn-border-radius: 0.75rem;
 }
 
 .card, .card-body {
