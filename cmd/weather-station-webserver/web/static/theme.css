@@ -9,8 +9,12 @@ body {
     background-color: #263238;
 }
 
-text, h1 {
+text, h3, span {
     color: #FFFFFF;
+}
+
+footer {
+    color: #C70039;
 }
 
 .btn-primary {

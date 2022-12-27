@@ -21,7 +21,11 @@ const (
 	long = "-74.0648"
 )
 
-const refreshPeriod = time.Minute
+const (
+	refreshPeriod = time.Minute
+	dateFormat    = "Mon 1/2"
+	timeFormat    = "3:04PM"
+)
 
 const (
 	getElementById = "getElementById"
@@ -29,29 +33,39 @@ const (
 )
 
 const (
-	htmlTagFmtImg = `<img src="%s" alt="Weather icon" width="86" height="86">`
+	idDocument    = "document"
+	idDate        = "date"
+	idTime        = "time"
+	idFooter      = "footer"
+	idNowCard     = "nowCard"
+	idTodayCard   = "todayCard"
+	idFiveDayCard = "fiveDayCard"
 )
+
+const htmlTagFmtImg = `<img src="%s" alt="Weather icon" width="86" height="86">`
 
 func run(ctx context.Context, apiClient *weather.APIClient, document js.Value) {
 	ticker := time.NewTicker(refreshPeriod)
 	defer ticker.Stop()
 
 	for {
-		document.Call(getElementById, "timestamp").Set(innerHTML, time.Now().Format(time.Kitchen))
+		timeNow := time.Now()
+
+		document.Call(getElementById, idFooter).Set(innerHTML, "")
+		document.Call(getElementById, idDate).Set(innerHTML, timeNow.Format(dateFormat))
+		document.Call(getElementById, idTime).Set(innerHTML, timeNow.Format(timeFormat))
 
 		hourlyForecast, err := apiClient.QueryHourlyForecast(ctx)
 		if err != nil {
-			log.Printf("Error querying hourly forecast: %s", err)
-
-			<-ticker.C
-
-			continue
+			appendFooter(document, fmt.Sprintf("Error querying hourly forecast: %s", err))
 		}
 
 		dailyForecast, err := apiClient.QueryDailyForecast(ctx)
 		if err != nil {
-			log.Printf("Error querying hourly forecast: %s", err)
+			appendFooter(document, fmt.Sprintf("Error querying daily forecast: %s", err))
+		}
 
+		if hourlyForecast == nil || dailyForecast == nil {
 			<-ticker.C
 
 			continue
@@ -61,16 +75,30 @@ func run(ctx context.Context, apiClient *weather.APIClient, document js.Value) {
 
 		err = updateToday(document, hourlyForecast)
 		if err != nil {
-			log.Printf("Error updating today card: %s", err)
+			appendFooter(document, fmt.Sprintf("Error updating today card: %s", err))
 		}
 
 		err = updateFiveDay(document, dailyForecast)
 		if err != nil {
-			log.Printf("Error updating five day card: %s", err)
+			appendFooter(document, fmt.Sprintf("Error updating five day card: %s", err))
 		}
 
 		<-ticker.C
 	}
+}
+
+func appendFooter(document js.Value, msg string) {
+	current := document.Call(getElementById, idFooter).Get(innerHTML).String()
+
+	var updated string
+
+	if current == "" {
+		updated = fmt.Sprintf("%s", msg)
+	} else {
+		updated = fmt.Sprintf("%s <br>\n%s", current, msg)
+	}
+
+	document.Call(getElementById, idFooter).Set(innerHTML, updated)
 }
 
 func updateNow(document js.Value, hourlyForecast *weather.GridPointsResponse) {
@@ -86,12 +114,12 @@ func updateNow(document js.Value, hourlyForecast *weather.GridPointsResponse) {
 		strings.Join(data, " <br>\n"),
 	)
 
-	document.Call(getElementById, "nowCard").Set(innerHTML, formatted)
+	document.Call(getElementById, idNowCard).Set(innerHTML, formatted)
 }
 
 func updateToday(document js.Value, hourlyForecast *weather.GridPointsResponse) error {
 	const (
-		card    = "todayCard"
+		card    = idTodayCard
 		rows    = 3
 		columns = 5
 	)
@@ -122,7 +150,7 @@ func updateToday(document js.Value, hourlyForecast *weather.GridPointsResponse) 
 
 func updateFiveDay(document js.Value, dailyForecast *weather.GridPointsResponse) error {
 	const (
-		card    = "fiveDayCard"
+		card    = idFiveDayCard
 		rows    = 3
 		columns = 5
 	)
@@ -161,7 +189,7 @@ func mustParseTime(t time.Time, err error) time.Time {
 func main() {
 	ctx := context.Background()
 	httpClient := &http.Client{}
-	document := js.Global().Get("document")
+	document := js.Global().Get(idDocument)
 
 	apiClient, err := weather.NewAPIClient(ctx, httpClient, lat, long)
 	if err != nil {
